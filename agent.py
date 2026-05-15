@@ -31,11 +31,13 @@ def get_latest_video():
 def download_audio(video_id):
     os.makedirs(AUDIO_DIR, exist_ok=True)
     url = f"https://www.youtube.com/watch?v={video_id}"
-    ydl_opts = {
+ydl_opts = {
         "cookiefile": COOKIE_FILE,
-"format": "bestaudio[ext=m4a]/bestaudio/best",
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": os.path.join(AUDIO_DIR, f"{video_id}.%(ext)s"),
         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "96"}],
+        "geo_bypass": True,
+        "geo_bypass_country": "TW",
         "quiet": True,
     }
     with YoutubeDL(ydl_opts) as ydl:
