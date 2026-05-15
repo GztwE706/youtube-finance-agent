@@ -1,14 +1,17 @@
 """
-YouTube 財經特工 — 自動監控 + Whisper 逐字稿 + GPT 摘要 + LINE 通知
+YouTube 財經特工 — 自動監控 + Whisper 逐字稿 + GPT 摘要 + Gmail 通知
 """
 
 import os
 import sys
-import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from openai import OpenAI
 from yt_dlp import YoutubeDL
 
-LINE_TOKEN   = os.environ["LINE_TOKEN"]
+GMAIL_USER   = os.environ["GMAIL_USER"]
+GMAIL_PASS   = os.environ["GMAIL_PASS"]
 OPENAI_KEY   = os.environ["OPENAI_API_KEY"]
 CHANNEL_URL  = os.environ["CHANNEL_URL"]
 COOKIE_FILE  = "youtube_cookies.txt"
@@ -66,14 +69,16 @@ def summarize(transcript, title):
     )
     return response.choices[0].message.content
 
-def send_line(message):
-    for chunk in [message[i:i+950] for i in range(0, len(message), 950)]:
-        requests.post(
-            "https://notify-api.line.me/api/notify",
-            headers={"Authorization": f"Bearer {LINE_TOKEN}"},
-            data={"message": chunk},
-            timeout=10,
-        )
+def send_email(subject, body):
+    msg = MIMEMultipart()
+    msg["From"] = GMAIL_USER
+    msg["To"] = GMAIL_USER
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(GMAIL_USER, GMAIL_PASS)
+        server.send_message(msg)
+    print("  ✅ Email 已發送！")
 
 def load_history():
     if not os.path.exists(HISTORY_FILE):
@@ -102,19 +107,20 @@ def main():
 
         print(f"  ★ 新影片：{title}")
         new_count += 1
-        send_line(f"\n🔔 偵測到新影片！\n📌 {title}\n⏳ AI 處理中，約需 15-25 分鐘...")
 
         try:
             mp3 = download_audio(video_id)
             transcript = transcribe(mp3)
             summary = summarize(transcript, title)
-            send_line(f"\n📊【AI 財經特工報告】\n📌 {title}\n{'─'*20}\n{summary}")
-            print("  ✅ 完成！")
+            send_email(
+                subject=f"📊 AI財經特工報告：{title}",
+                body=f"影片標題：{title}\n\n{'─'*30}\n\n{summary}"
+            )
             save_history(video_id)
             if os.path.exists(mp3):
                 os.remove(mp3)
         except Exception as e:
-            send_line(f"\n❌ 處理失敗：{title}\n錯誤：{str(e)[:200]}")
+            send_email(subject=f"❌ 處理失敗：{title}", body=f"錯誤：{str(e)[:500]}")
 
     if new_count == 0:
         print("  本次無新影片。")
