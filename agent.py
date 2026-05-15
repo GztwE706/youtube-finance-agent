@@ -33,7 +33,7 @@ def download_audio(video_id):
     url = f"https://www.youtube.com/watch?v={video_id}"
     ydl_opts = {
         "cookiefile": COOKIE_FILE,
-        "format": "bestaudio/best",
+"format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": os.path.join(AUDIO_DIR, f"{video_id}.%(ext)s"),
         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "96"}],
         "quiet": True,
