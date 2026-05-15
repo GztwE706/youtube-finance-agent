@@ -38,9 +38,10 @@ jobs:
         run: |
           echo "${{ secrets.YOUTUBE_COOKIES_B64 }}" | base64 -d > youtube_cookies.txt
 
-      - name: Run agent
+- name: Run agent
         env:
-          LINE_TOKEN:     ${{ secrets.LINE_TOKEN }}
+          GMAIL_USER:     ${{ secrets.GMAIL_USER }}
+          GMAIL_PASS:     ${{ secrets.GMAIL_PASS }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CHANNEL_URL:    ${{ secrets.CHANNEL_URL }}
         run: python agent.py
